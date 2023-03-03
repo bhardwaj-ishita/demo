@@ -12,17 +12,23 @@ input: merkle Root after the merkle tree is built
 */
 contract VoterVerification {
 
-    //voting hash => bool
-    mapping (uint256 => bool) public voterVerified;
+    GovernanceToken public governanceToken;
+
+    constructor(GovernanceToken _governanceToken){
+        governanceToken = _governanceToken; // Governance Token ERC20 contract
+    }
+
+    //ID => bool
+    mapping (bytes32 => bool) public voterVerified;
     
-    function voterVerification(bytes32 calldata _biometric, bytes32 calldata _ID, bytes32 merkleRoot) public 
+    function voterVerification(bytes32 _biometric, bytes32 _ID, bytes32 merkleRoot) public returns(bool) 
     {
-        uint256 voterHAsh = sha256(_biometric + _ID);
-        require(!voterVerified[msg.sender], 'Voter is already verified');
-        require(governanceToken.checkBal(msg.sender) == 1, 'Already Voted');//can put this in the voting contract instead
-        bytes32 leaf = keccak256(abi.encodePacked(voterHAsh));
+        bytes32 voterHash = _ID;
+        require(!voterVerified[_ID], 'Voter is already verified');
+        require(governanceToken.balanceOf(msg.sender) == 1, 'Already Voted');//can put this in the voting contract instead
+        bytes32 leaf = keccak256(abi.encodePacked(voterHash));
         require(MerkleProof.verify(voterHash, merkleRoot, leaf), 'Invalid Voter');
-        voterVerified[voterHAsh] = true;
+        voterVerified[voterHash] = true;
         return true;
     }
 
